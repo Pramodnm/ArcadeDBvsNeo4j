@@ -1,0 +1,907 @@
+{
+  "runAt": "2026-10-04T06:08:38.890Z",
+  "arcadeVer": "26.10.1-SNAPSHOT (build 82052a624271e2a3d3e90931cb8f8b4990bfc879/1791045006946/main)",
+  "neoVer": "5.26.0",
+  "rows": [
+    {
+      "category": "Read",
+      "feature": "MATCH / WHERE / RETURN",
+      "query": "MATCH (s:Svc) WHERE s.tier > 1 RETURN s.id ORDER BY s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 9.1,
+        "result": "[{\"s.id\":\"b\"},{\"s.id\":\"c\"},{\"s.id\":\"d\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 36.5,
+        "result": "[{\"row\":[\"b\"],\"meta\":[null]},{\"row\":[\"c\"],\"meta\":[null]},{\"row\":[\"d..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "OPTIONAL MATCH",
+      "query": "MATCH (s:Svc {id:'d'}) OPTIONAL MATCH (s)-[:DEPENDS_ON]->(x) RETURN s.id, x",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.6,
+        "result": "[{\"s.id\":\"d\",\"x\":null}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 52.8,
+        "result": "[{\"row\":[\"d\",null],\"meta\":[null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "Variable-length path *1..3",
+      "query": "MATCH (:Svc {id:'a'})-[:DEPENDS_ON*1..3]->(x) RETURN DISTINCT x.id ORDER BY x.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 5.4,
+        "result": "[{\"x.id\":\"b\"},{\"x.id\":\"c\"},{\"x.id\":\"d\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 66.2,
+        "result": "[{\"row\":[\"b\"],\"meta\":[null]},{\"row\":[\"c\"],\"meta\":[null]},{\"row\":[\"d..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "Named path + nodes()/length()",
+      "query": "MATCH p=(:Svc {id:'a'})-[:DEPENDS_ON*]->(:Svc {id:'d'}) RETURN length(p) AS len ORDER BY len",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.7,
+        "result": "[{\"len\":1},{\"len\":3}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 98.4,
+        "result": "[{\"row\":[1],\"meta\":[null]},{\"row\":[3],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "shortestPath()",
+      "query": "MATCH (a:Svc {id:'a'}),(d:Svc {id:'d'}) MATCH p=shortestPath((a)-[:DEPENDS_ON*]->(d)) RETURN length(p)",
+      "arcadedb": {
+        "ok": true,
+        "ms": 10.4,
+        "result": "[{\"length(p)\":1}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 64.8,
+        "result": "[{\"row\":[1],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "allShortestPaths()",
+      "query": "MATCH (a:Svc {id:'a'}),(d:Svc {id:'d'}) MATCH p=allShortestPaths((a)-[:DEPENDS_ON*]->(d)) RETURN length(p)",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.2,
+        "result": "[{\"length(p)\":1}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 81.5,
+        "result": "[{\"row\":[1],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "Quantified path pattern (QPP) {1,3}",
+      "query": "MATCH (:Svc {id:'a'}) ((x)-[:DEPENDS_ON]->(y)){1,3} (z) RETURN DISTINCT z.id ORDER BY z.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7,
+        "result": "[{\"z.id\":\"b\"},{\"z.id\":\"c\"},{\"z.id\":\"d\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 91,
+        "result": "[{\"row\":[\"b\"],\"meta\":[null]},{\"row\":[\"c\"],\"meta\":[null]},{\"row\":[\"d..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "SHORTEST k (GQL path selector)",
+      "query": "MATCH p = SHORTEST 1 (:Svc {id:'a'})-[:DEPENDS_ON]->+(:Svc {id:'d'}) RETURN length(p)",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.8,
+        "result": "[{\"length(p)\":1},{\"length(p)\":3}]",
+        "canonical": "[[1],[3]]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 92.1,
+        "result": "[{\"row\":[1],\"meta\":[null]}]",
+        "canonical": "[[1]]"
+      },
+      "sameResult": false
+    },
+    {
+      "category": "Read",
+      "feature": "ALL SHORTEST (GQL path selector)",
+      "query": "MATCH p = ALL SHORTEST (:Svc {id:'a'})-[:DEPENDS_ON]->+(:Svc {id:'d'}) RETURN length(p)",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.6,
+        "result": "[{\"length(p)\":1},{\"length(p)\":3}]",
+        "canonical": "[[1],[3]]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 133.8,
+        "result": "[{\"row\":[1],\"meta\":[null]}]",
+        "canonical": "[[1]]"
+      },
+      "sameResult": false
+    },
+    {
+      "category": "Read",
+      "feature": "SHORTEST 2 (GQL path selector)",
+      "query": "MATCH p = SHORTEST 2 (:Svc {id:'a'})-[:DEPENDS_ON]->+(:Svc {id:'d'}) RETURN length(p) ORDER BY length(p)",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.1,
+        "result": "[{\"length(p)\":1},{\"length(p)\":3}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 87.8,
+        "result": "[{\"row\":[1],\"meta\":[null]},{\"row\":[3],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "Label expression :A&B",
+      "query": "MATCH (s:Svc&Critical) RETURN count(s) AS n",
+      "arcadedb": {
+        "ok": true,
+        "ms": 5,
+        "result": "[{\"n\":0}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 49.5,
+        "result": "[{\"row\":[0],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "Label expression :A|B",
+      "query": "MATCH (s:Svc|Batch) RETURN count(s) AS n",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.1,
+        "result": "[{\"n\":4}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 37.3,
+        "result": "[{\"row\":[4],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Read",
+      "feature": "Path mode ACYCLIC/TRAIL (GQL)",
+      "query": "MATCH p = ACYCLIC (:Svc {id:'a'})-[:DEPENDS_ON*1..5]->(x) RETURN count(p)",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7,
+        "result": "[{\"count(p)\":4}]"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 7.5,
+        "error": "Neo.ClientError.Statement.SyntaxError: Invalid input 'ACYCLIC': expected '(', 'allShortestPaths' or 'shortestPath' (line 1, column 11 (offset: 10))"
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Read",
+      "feature": "UNION",
+      "query": "MATCH (s:Svc {id:'a'}) RETURN s.id AS id UNION MATCH (s:Svc {id:'b'}) RETURN s.id AS id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.7,
+        "result": "[{\"id\":\"a\"},{\"id\":\"b\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 65.2,
+        "result": "[{\"row\":[\"a\"],\"meta\":[null]},{\"row\":[\"b\"],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Projection",
+      "feature": "List comprehension",
+      "query": "RETURN [x IN range(1,5) WHERE x % 2 = 1 | x * 10] AS l",
+      "arcadedb": {
+        "ok": true,
+        "ms": 8.9,
+        "result": "[{\"l\":[10,30,50]}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 43.7,
+        "result": "[{\"row\":[[10,30,50]],\"meta\":[null,null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Projection",
+      "feature": "Pattern comprehension",
+      "query": "MATCH (s:Svc {id:'a'}) RETURN [(s)-[:DEPENDS_ON]->(x) | x.id] AS deps",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.4,
+        "result": "[{\"deps\":[\"d\",\"b\"]}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 75.7,
+        "result": "[{\"row\":[[\"b\",\"d\"]],\"meta\":[null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Projection",
+      "feature": "Map projection",
+      "query": "MATCH (s:Svc {id:'a'}) RETURN s {.id, .tier, kind:'svc'} AS m",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.8,
+        "result": "[{\"m\":{\"id\":\"a\",\"tier\":1,\"kind\":\"svc\"}}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 36.6,
+        "result": "[{\"row\":[{\"tier\":1,\"kind\":\"svc\",\"id\":\"a\"}],\"meta\":[null,null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Projection",
+      "feature": "CASE expression",
+      "query": "MATCH (s:Svc) RETURN s.id, CASE WHEN s.tier=1 THEN 'edge' ELSE 'core' END AS k ORDER BY s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 9,
+        "result": "[{\"s.id\":\"a\",\"k\":\"edge\"},{\"s.id\":\"b\",\"k\":\"core\"},{\"s.id\":\"c\",\"k\":\"c..."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 48,
+        "result": "[{\"row\":[\"a\",\"edge\"],\"meta\":[null,null]},{\"row\":[\"b\",\"core\"],\"meta\"..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Projection",
+      "feature": "reduce()",
+      "query": "RETURN reduce(acc=0, x IN [1,2,3] | acc + x) AS s",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.5,
+        "result": "[{\"s\":6}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 29.1,
+        "result": "[{\"row\":[6],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Projection",
+      "feature": "Aggregations collect/count/avg",
+      "query": "MATCH (s:Svc) RETURN s.tier, count(*) AS n, collect(s.id) AS ids ORDER BY s.tier",
+      "arcadedb": {
+        "ok": true,
+        "ms": 10.2,
+        "result": "[{\"s.tier\":1,\"n\":1,\"ids\":[\"a\"]},{\"s.tier\":2,\"n\":1,\"ids\":[\"b\"]},{\"s...."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 41.6,
+        "result": "[{\"row\":[1,1,[\"a\"]],\"meta\":[null,null,null]},{\"row\":[2,1,[\"b\"]],\"me..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Projection",
+      "feature": "percentileCont / stDev",
+      "query": "MATCH (s:Svc) RETURN percentileCont(s.tier, 0.5) AS p50, stDev(s.tier) AS sd",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.3,
+        "result": "[{\"p50\":2.5,\"sd\":0.9574271077563381}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 42.8,
+        "result": "[{\"row\":[2.5,0.9574271077563381],\"meta\":[null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Subquery",
+      "feature": "EXISTS { } subquery",
+      "query": "MATCH (s:Svc) WHERE EXISTS { (s)-[:DEPENDS_ON]->(:Svc {tier:3}) } RETURN s.id ORDER BY s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 8.6,
+        "result": "[{\"s.id\":\"a\"},{\"s.id\":\"b\"},{\"s.id\":\"c\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 64.8,
+        "result": "[{\"row\":[\"a\"],\"meta\":[null]},{\"row\":[\"b\"],\"meta\":[null]},{\"row\":[\"c..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Subquery",
+      "feature": "COUNT { } subquery",
+      "query": "MATCH (s:Svc) RETURN s.id, COUNT { (s)-[:DEPENDS_ON]->() } AS out ORDER BY s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.4,
+        "result": "[{\"s.id\":\"a\",\"out\":2},{\"s.id\":\"b\",\"out\":1},{\"s.id\":\"c\",\"out\":1},{\"s..."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 51.3,
+        "result": "[{\"row\":[\"a\",2],\"meta\":[null,null]},{\"row\":[\"b\",1],\"meta\":[null,nul..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Subquery",
+      "feature": "COLLECT { } subquery",
+      "query": "MATCH (s:Svc {id:'a'}) RETURN COLLECT { MATCH (s)-[:DEPENDS_ON]->(x) RETURN x.id } AS ids",
+      "arcadedb": {
+        "ok": true,
+        "ms": 4.8,
+        "result": "[{\"ids\":[\"d\",\"b\"]}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 63.4,
+        "result": "[{\"row\":[[\"b\",\"d\"]],\"meta\":[null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Subquery",
+      "feature": "CALL { } subquery",
+      "query": "MATCH (s:Svc) CALL { WITH s MATCH (s)-[:DEPENDS_ON]->(x) RETURN count(x) AS c } RETURN s.id, c ORDER BY s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.4,
+        "result": "[{\"s.id\":\"a\",\"c\":2},{\"s.id\":\"b\",\"c\":1},{\"s.id\":\"c\",\"c\":1},{\"s.id\":\"..."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 61.1,
+        "result": "[{\"row\":[\"a\",2],\"meta\":[null,null]},{\"row\":[\"b\",1],\"meta\":[null,nul..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Subquery",
+      "feature": "CALL (s) { } scoped subquery (Cypher 5.23+)",
+      "query": "MATCH (s:Svc) CALL (s) { MATCH (s)-[:DEPENDS_ON]->(x) RETURN count(x) AS c } RETURN s.id, c ORDER BY s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.4,
+        "result": "[{\"s.id\":\"a\",\"c\":2},{\"s.id\":\"b\",\"c\":1},{\"s.id\":\"c\",\"c\":1},{\"s.id\":\"..."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 52.6,
+        "result": "[{\"row\":[\"a\",2],\"meta\":[null,null]},{\"row\":[\"b\",1],\"meta\":[null,nul..."
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "MERGE ON CREATE / ON MATCH",
+      "query": "MERGE (s:Svc {id:'e'}) ON CREATE SET s.created=true ON MATCH SET s.seen=true RETURN s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 10.2,
+        "result": "[{\"s.id\":\"e\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 48.5,
+        "result": "[{\"row\":[\"e\"],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "SET += map / REMOVE",
+      "query": "MATCH (s:Svc {id:'e'}) SET s += {owner:'team-x'} REMOVE s.created RETURN s.owner",
+      "arcadedb": {
+        "ok": true,
+        "ms": 9.3,
+        "result": "[{\"s.owner\":\"team-x\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 47.6,
+        "result": "[{\"row\":[\"team-x\"],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "SET extra label (multi-label node)",
+      "query": "MATCH (s:Svc {id:'e'}) SET s:Critical RETURN labels(s) AS l",
+      "arcadedb": {
+        "ok": true,
+        "ms": 84,
+        "result": "[{\"l\":[\"Critical\",\"Svc\"]}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 53.4,
+        "result": "[{\"row\":[[\"Svc\",\"Critical\"]],\"meta\":[null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "Dynamic label SET n:$(expr) (Cypher 5.26)",
+      "query": "MATCH (s:Svc {id:'e'}) SET s:$('Tagged') RETURN labels(s) AS l",
+      "arcadedb": {
+        "ok": true,
+        "ms": 80.9,
+        "result": "[{\"l\":[\"Critical\",\"Svc\",\"Tagged\"]}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 44.8,
+        "result": "[{\"row\":[[\"Svc\",\"Critical\",\"Tagged\"]],\"meta\":[null,null,null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "FOREACH",
+      "query": "MATCH (s:Svc {id:'e'}) FOREACH (t IN ['x','y'] | CREATE (s)-[:TAGGED]->(:Tag {v:t}))",
+      "arcadedb": {
+        "ok": true,
+        "ms": 70.7,
+        "result": "[]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 45.8,
+        "result": "[]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "UNWIND batch create",
+      "query": "UNWIND $rows AS r CREATE (:Batch {id:r.id})",
+      "arcadedb": {
+        "ok": true,
+        "ms": 61.5,
+        "result": "[]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 33,
+        "result": "[]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "CALL { } IN TRANSACTIONS",
+      "query": "UNWIND range(1,10) AS i CALL { WITH i CREATE (:Bulk {i:i}) } IN TRANSACTIONS OF 5 ROWS",
+      "arcadedb": {
+        "ok": true,
+        "ms": 64.8,
+        "result": "[]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 52.6,
+        "result": "[]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Write",
+      "feature": "DETACH DELETE",
+      "query": "MATCH (t:Tag) DETACH DELETE t",
+      "arcadedb": {
+        "ok": true,
+        "ms": 9.8,
+        "result": "[]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 33.1,
+        "result": "[]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Schema",
+      "feature": "CREATE CONSTRAINT … IS UNIQUE",
+      "query": "CREATE CONSTRAINT svc_id IF NOT EXISTS FOR (s:Svc) REQUIRE s.id IS UNIQUE",
+      "arcadedb": {
+        "ok": true,
+        "ms": 74,
+        "result": "[]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 138.3,
+        "result": "[]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Schema",
+      "feature": "CREATE INDEX (range) via Cypher",
+      "query": "CREATE INDEX svc_tier IF NOT EXISTS FOR (s:Svc) ON (s.tier)",
+      "arcadedb": {
+        "ok": true,
+        "ms": 71,
+        "result": "[]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 19,
+        "result": "[]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Schema",
+      "feature": "CREATE FULLTEXT INDEX via Cypher",
+      "query": "CREATE FULLTEXT INDEX svc_ft IF NOT EXISTS FOR (s:Svc) ON EACH [s.id]",
+      "arcadedb": {
+        "ok": false,
+        "ms": 3.9,
+        "error": "Only standard, RANGE and TEXT index types are supported"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 15.6,
+        "result": "[]"
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Schema",
+      "feature": "SHOW INDEXES",
+      "query": "SHOW INDEXES",
+      "arcadedb": {
+        "ok": false,
+        "ms": 3.9,
+        "error": "Only SHOW USERS and SHOW CURRENT USER are currently supported"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 41.1,
+        "result": "[{\"row\":[1,\"index_343aff4e\",\"ONLINE\",100,\"LOOKUP\",\"NODE\",null,null,..."
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Schema",
+      "feature": "SHOW CONSTRAINTS",
+      "query": "SHOW CONSTRAINTS",
+      "arcadedb": {
+        "ok": false,
+        "ms": 5.5,
+        "error": "Only SHOW USERS and SHOW CURRENT USER are currently supported"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 72,
+        "result": "[{\"row\":[4,\"svc_id\",\"UNIQUENESS\",\"NODE\",[\"Svc\"],[\"id\"],\"svc_id\",nul..."
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Introspection",
+      "feature": "CALL db.labels()",
+      "query": "CALL db.labels()",
+      "arcadedb": {
+        "ok": true,
+        "ms": 5.3,
+        "result": "[{\"label\":\"Svc\"},{\"label\":\"Tagged\"},{\"label\":\"Batch\"},{\"label\":\"Cri..."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 366.6,
+        "result": "[{\"row\":[\"Svc\"],\"meta\":[null]},{\"row\":[\"Critical\"],\"meta\":[null]},{..."
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Introspection",
+      "feature": "CALL db.schema.visualization()",
+      "query": "CALL db.schema.visualization()",
+      "arcadedb": {
+        "ok": true,
+        "ms": 4.9,
+        "result": "[{\"name\":\"TAGGED\",\"type\":\"relationship\",\"properties\":[]},{\"name\":\"S..."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 29.4,
+        "result": "[{\"row\":[[{\"indexes\":[\"tier\",\"id\"],\"name\":\"Svc\",\"constraints\":[\"Con..."
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Planner",
+      "feature": "EXPLAIN",
+      "query": "EXPLAIN MATCH (s:Svc {id:'a'})-[:DEPENDS_ON]->(x) RETURN x",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.5,
+        "result": "[]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 47.5,
+        "result": "[]"
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Planner",
+      "feature": "PROFILE",
+      "query": "PROFILE MATCH (s:Svc {id:'a'})-[:DEPENDS_ON]->(x) RETURN x",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.4,
+        "result": "[{\"@rid\":\"#1:3\",\"@type\":\"Svc\",\"@cat\":\"v\",\"tier\":3,\"id\":\"d\"},{\"@rid\"..."
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 21.1,
+        "result": "[{\"row\":[{\"tier\":2,\"id\":\"b\"}],\"meta\":[{\"id\":0,\"elementId\":\"4:81a06e..."
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Planner",
+      "feature": "USING INDEX hint",
+      "query": "MATCH (s:Svc) USING INDEX s:Svc(id) WHERE s.id='a' RETURN s.id",
+      "arcadedb": {
+        "ok": true,
+        "ms": 4.8,
+        "result": "[{\"s.id\":\"a\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 30.1,
+        "result": "[{\"row\":[\"a\"],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Types",
+      "feature": "Temporal: datetime()/duration.between()",
+      "query": "RETURN duration.between(date('2024-01-31'), date('2024-03-01')) AS d",
+      "arcadedb": {
+        "ok": true,
+        "ms": 4.3,
+        "result": "[{\"d\":\"P1M1D\"}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 29.5,
+        "result": "[{\"row\":[\"P1M1D\"],\"meta\":[{\"type\":\"duration\"}]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Types",
+      "feature": "Spatial: point() + point.distance()",
+      "query": "RETURN point.distance(point({x:0,y:0}), point({x:3,y:4})) AS d",
+      "arcadedb": {
+        "ok": true,
+        "ms": 6.1,
+        "result": "[{\"d\":5}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 19.7,
+        "result": "[{\"row\":[5],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Types",
+      "feature": "Map-valued property (Neo4j disallows)",
+      "query": "CREATE (:Cfg {c:{debug:true}})",
+      "arcadedb": {
+        "ok": false,
+        "ms": 60.6,
+        "error": "TypeError: InvalidPropertyType - Property values can only be of primitive types or arrays thereof. Encountered a map [debug] assigned to property 'c'."
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 19.5,
+        "error": "Neo.ClientError.Statement.TypeError: Property values can only be of primitive types or arrays thereof. Encountered: Map{debug -> Boolean('true')}."
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Types",
+      "feature": "Case-sensitive labels (:T2 vs :t2 distinct)",
+      "query": "CREATE (:CaseT {k:1}), (:caset {k:2}) WITH 1 AS x MATCH (n:CaseT) RETURN count(n) AS n",
+      "arcadedb": {
+        "ok": true,
+        "ms": 76.8,
+        "result": "[{\"n\":1}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 46,
+        "result": "[{\"row\":[1],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Extensions",
+      "feature": "apoc.text.join()",
+      "query": "RETURN apoc.text.join(['a','b'], ',') AS s",
+      "arcadedb": {
+        "ok": true,
+        "ms": 3.7,
+        "result": "[{\"s\":\"a,b\"}]"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 10,
+        "error": "Neo.ClientError.Statement.SyntaxError: Unknown function 'apoc.text.join' (line 1, column 8 (offset: 7))"
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Extensions",
+      "feature": "apoc.map.merge()",
+      "query": "RETURN apoc.map.merge({a:1},{b:2}) AS m",
+      "arcadedb": {
+        "ok": true,
+        "ms": 4.9,
+        "result": "[{\"m\":{\"a\":1,\"b\":2}}]"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 11.5,
+        "error": "Neo.ClientError.Statement.SyntaxError: Unknown function 'apoc.map.merge' (line 1, column 8 (offset: 7))"
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Extensions",
+      "feature": "apoc.path.expand (procedure)",
+      "query": "MATCH (s:Svc {id:'a'}) CALL apoc.path.expand(s, 'DEPENDS_ON>', null, 1, 3) YIELD path RETURN count(path) AS n",
+      "arcadedb": {
+        "ok": true,
+        "ms": 7.3,
+        "result": "[{\"n\":0}]"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 11.8,
+        "error": "Neo.ClientError.Procedure.ProcedureNotFound: There is no procedure with the name `apoc.path.expand` registered for this database instance. Please ensure you've "
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Extensions",
+      "feature": "Weighted shortest path (algo.dijkstra)",
+      "query": "MATCH (a:Svc {id:'a'}),(d:Svc {id:'d'}) CALL algo.dijkstra(a, d, 'DEPENDS_ON', 'w') YIELD weight RETURN weight",
+      "arcadedb": {
+        "ok": true,
+        "ms": 8.3,
+        "result": "[{\"weight\":4}]"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 11,
+        "error": "Neo.ClientError.Procedure.ProcedureNotFound: There is no procedure with the name `algo.dijkstra` registered for this database instance. Please ensure you've spe"
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Extensions",
+      "feature": "GDS: gds.graph.project",
+      "query": "CALL gds.graph.project('g','Svc','DEPENDS_ON')",
+      "arcadedb": {
+        "ok": false,
+        "ms": 4.7,
+        "error": "Unknown procedure/function: gds.graph.project"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 9.1,
+        "error": "Neo.ClientError.Procedure.ProcedureNotFound: There is no procedure with the name `gds.graph.project` registered for this database instance. Please ensure you've"
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Extensions",
+      "feature": "Vector: db.index.vector.queryNodes",
+      "query": "CALL db.index.vector.queryNodes('missing_idx', 1, [0.1,0.2]) YIELD node RETURN node",
+      "arcadedb": {
+        "ok": false,
+        "ms": 5.5,
+        "error": "Error executing procedure: db.index.vector.querynodes -> Index with name 'missing_idx' was not found"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 26.7,
+        "error": "Neo.ClientError.Procedure.ProcedureCallFailed: Failed to invoke procedure `db.index.vector.queryNodes`: Caused by: java.lang.IllegalArgumentException: There is "
+      },
+      "sameResult": null
+    },
+    {
+      "category": "Extensions",
+      "feature": "Vector function vector.similarity.cosine()",
+      "query": "RETURN vector.similarity.cosine([1.0,0.0],[1.0,0.0]) AS s",
+      "arcadedb": {
+        "ok": true,
+        "ms": 5.4,
+        "result": "[{\"s\":1}]"
+      },
+      "neo4j": {
+        "ok": true,
+        "ms": 22.7,
+        "result": "[{\"row\":[1],\"meta\":[null]}]"
+      },
+      "sameResult": true
+    },
+    {
+      "category": "Legacy",
+      "feature": "Legacy {param} syntax (removed in Cypher 25)",
+      "query": "MATCH (s:Svc) WHERE s.id = {p} RETURN s",
+      "arcadedb": {
+        "ok": false,
+        "ms": 3.8,
+        "error": "Deprecated syntax: legacy parameter '{p}' is no longer supported. Use '$p' instead"
+      },
+      "neo4j": {
+        "ok": false,
+        "ms": 10.5,
+        "error": "Neo.ClientError.Statement.SyntaxError: Invalid input '}': expected ':' (line 1, column 30 (offset: 29))"
+      },
+      "sameResult": null
+    }
+  ]
+}

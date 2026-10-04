@@ -1,0 +1,97 @@
+# ==============================================================================
+# ArcadeDB High Availability Raft Cluster - Helm Values Configuration
+# ==============================================================================
+
+replicaCount: 3
+
+image:
+  repository: arcadedata/arcadedb
+  tag: "24.12.1"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+auth:
+  rootPassword: "ArcadeEnterprisePassword2026!"
+  existingSecret: ""
+
+cluster:
+  enabled: true
+  name: "arcadedb-k8s-cluster"
+  electionTimeoutMs: 2000
+  heartbeatIntervalMs: 500
+
+jvm:
+  initialHeap: "2g"
+  maxHeap: "4g"
+  extraJavaOpts: >-
+    -Darcadedb.server.mode=distributed
+    -Darcadedb.server.plugins=Bolt:com.arcadedb.server.bolt.BoltPlugin,GremlinServer:com.arcadedb.server.gremlin.GremlinServerPlugin,Postgres:com.arcadedb.postgres.PostgresProtocolPlugin,Redis:com.arcadedb.redis.RedisProtocolPlugin
+    -Darcadedb.server.defaultDatabases=EnterpriseTopology
+    -XX:+UseG1GC
+    -XX:MaxGCPauseMillis=20
+
+service:
+  type: ClusterIP
+  httpPort: 2480
+  binaryPort: 2424
+  boltPort: 7687
+  gremlinPort: 8182
+  redisPort: 6379
+  postgresPort: 5432
+
+headlessService:
+  name: arcadedb-headless
+  internalRaftPort: 2424
+
+persistence:
+  enabled: true
+  storageClass: "standard"
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  mountPath: /home/arcadedb/databases
+
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "3Gi"
+  limits:
+    cpu: "4000m"
+    memory: "6Gi"
+
+probes:
+  readiness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 5
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - arcadedb-cluster
+          topologyKey: kubernetes.io/hostname
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 02:00 UTC
+  database: "EnterpriseTopology"
+  retentionDays: 14
+  s3:
+    enabled: false
+    bucket: "enterprise-arcadedb-backups"
+    endpoint: "s3.amazonaws.com"
+    secretRef: "s3-backup-credentials"

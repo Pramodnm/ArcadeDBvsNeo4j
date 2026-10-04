@@ -1,0 +1,20 @@
+apiVersion: v2
+name: arcadedb-cluster
+description: Production-grade High Availability Helm Chart for ArcadeDB Multi-Model Graph Database Cluster (Raft Consensus)
+type: application
+version: 1.0.0
+appVersion: "24.12.1"
+keywords:
+  - arcadedb
+  - graph-database
+  - multi-model
+  - cypher
+  - vector-search
+  - raft-cluster
+  - high-availability
+home: https://arcadedb.com
+sources:
+  - https://github.com/ArcadeData/arcadedb
+maintainers:
+  - name: Architecture Team
+    email: enterprise-architecture@example.com

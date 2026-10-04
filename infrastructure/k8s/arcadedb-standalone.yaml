@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: arcadedb-standalone-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arcadedb-standalone
+  labels:
+    app: arcadedb-standalone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: arcadedb-standalone
+  template:
+    metadata:
+      labels:
+        app: arcadedb-standalone
+    spec:
+      containers:
+        - name: arcadedb
+          image: arcadedata/arcadedb:24.12.1
+          ports:
+            - containerPort: 2480
+              name: http
+            - containerPort: 7687
+              name: bolt
+            - containerPort: 8182
+              name: gremlin
+            - containerPort: 6379
+              name: redis
+          env:
+            - name: ARCADE_ROOT_PASSWORD
+              value: "arcadepassword"
+            - name: JAVA_OPTS
+              value: "-Xms1g -Xmx2g -Darcadedb.server.plugins=Bolt:com.arcadedb.server.bolt.BoltPlugin,GremlinServer:com.arcadedb.server.gremlin.GremlinServerPlugin -Darcadedb.server.defaultDatabases=EnterpriseTopology"
+          volumeMounts:
+            - name: storage
+              mountPath: /home/arcadedb/databases
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 3Gi
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: arcadedb-standalone-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arcadedb-standalone-service
+spec:
+  type: ClusterIP
+  selector:
+    app: arcadedb-standalone
+  ports:
+    - name: http
+      port: 2480
+      targetPort: 2480
+    - name: bolt
+      port: 7687
+      targetPort: 7687

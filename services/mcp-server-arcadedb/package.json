@@ -1,0 +1,22 @@
+{
+  "name": "arcadedb-mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) Server for ArcadeDB Multi-Model Graph Database",
+  "main": "dist/index.js",
+  "bin": {
+    "arcadedb-mcp-server": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "node dist/index.js --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

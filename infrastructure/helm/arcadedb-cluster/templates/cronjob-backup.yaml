@@ -1,0 +1,33 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-backup
+  labels:
+    app.kubernetes.io/name: "arcadedb-backup"
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup-runner
+              image: curlimages/curl:8.6.0
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  echo "Triggering ArcadeDB Hot Backup for database: {{ .Values.backup.database }} at ${TIMESTAMP}..."
+                  curl -s -f -u root:{{ .Values.auth.rootPassword }} \
+                    -X POST http://{{ .Release.Name }}-service:2480/api/v1/backup/{{ .Values.backup.database }} \
+                    -H "Content-Type: application/json" \
+                    -d '{"directory": "/home/arcadedb/databases/backups", "compression": "GZIP"}'
+                  echo "Backup command dispatched successfully."
+{{- end }}

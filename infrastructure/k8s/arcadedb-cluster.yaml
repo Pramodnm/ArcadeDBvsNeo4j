@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: arcadedb-headless
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: binary-raft
+      port: 2424
+    - name: http
+      port: 2480
+    - name: bolt
+      port: 7687
+  selector:
+    app: arcadedb-cluster
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arcadedb-cluster-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 2480
+      targetPort: 2480
+    - name: bolt
+      port: 7687
+      targetPort: 7687
+  selector:
+    app: arcadedb-cluster
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: arcadedb-cluster
+spec:
+  serviceName: arcadedb-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: arcadedb-cluster
+  template:
+    metadata:
+      labels:
+        app: arcadedb-cluster
+    spec:
+      containers:
+        - name: arcadedb
+          image: arcadedata/arcadedb:24.12.1
+          ports:
+            - containerPort: 2480
+              name: http
+            - containerPort: 2424
+              name: binary-raft
+            - containerPort: 7687
+              name: bolt
+          env:
+            - name: ARCADE_ROOT_PASSWORD
+              value: "arcadepassword"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: JAVA_OPTS
+              value: "-Xms1g -Xmx2g -Darcadedb.server.mode=distributed -Darcadedb.server.nodeName=$(POD_NAME) -Darcadedb.server.plugins=Bolt:com.arcadedb.server.bolt.BoltPlugin -Darcadedb.server.defaultDatabases=EnterpriseTopology"
+          volumeMounts:
+            - name: datavolume
+              mountPath: /home/arcadedb/databases
+  volumeClaimTemplates:
+    - metadata:
+        name: datavolume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi

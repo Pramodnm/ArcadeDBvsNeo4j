@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  labels:
+    app.kubernetes.io/name: {{ include "arcadedb-cluster.name" . | default "arcadedb-cluster" }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  arcadedb-server.json: |
+    {
+      "network": {
+        "http": {
+          "host": "0.0.0.0",
+          "port": 2480
+        },
+        "binary": {
+          "host": "0.0.0.0",
+          "port": 2424
+        }
+      },
+      "ha": {
+        "clusterName": "{{ .Values.cluster.name }}",
+        "electionTimeout": {{ .Values.cluster.electionTimeoutMs }},
+        "heartbeatInterval": {{ .Values.cluster.heartbeatIntervalMs }}
+      }
+    }

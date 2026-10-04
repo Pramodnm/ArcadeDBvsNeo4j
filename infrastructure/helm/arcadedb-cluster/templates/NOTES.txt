@@ -1,0 +1,19 @@
+==============================================================================
+ArcadeDB High-Availability Raft Cluster has been deployed!
+==============================================================================
+
+Release Name: {{ .Release.Name }}
+Replicas:     {{ .Values.replicaCount }}
+Database:     {{ .Values.backup.database }}
+
+1. Connect to ArcadeDB Studio & HTTP REST API:
+   kubectl port-forward svc/{{ .Release.Name }}-service 2480:2480
+   Open in browser: http://localhost:2480
+   Credentials: root / {{ .Values.auth.rootPassword }}
+
+2. Connect via Neo4j Bolt Protocol (from Node.js or .NET applications):
+   kubectl port-forward svc/{{ .Release.Name }}-service 7687:7687
+   Connection URI: bolt://localhost:7687
+
+3. Inspect Raft Cluster Status:
+   curl -u root:{{ .Values.auth.rootPassword }} http://localhost:2480/api/v1/server?mode=cluster
